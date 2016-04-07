@@ -18,7 +18,7 @@ void imprimeError(int opcion, char **argv)
   case 3:
     std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <factor1> <factor2>" << std::endl;
     break;
-    case 4:
+  case 4:
       break;
   case 5:
     break;
@@ -105,7 +105,14 @@ int main(int argc, char *argv[])
     break;
   case 3:
     {
-      
+      if(argc != 4)
+      {
+	imprimeError(opcion, argv);
+	return -1;
+      }
+      ArchivoWAVR a(argv[2]);
+      ArchivoWAVR b(argv[3]);
+      ArchivoWAVW c = a*b;
     }
     break;
   default:
