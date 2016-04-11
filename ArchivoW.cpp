@@ -12,7 +12,7 @@ ArchivoW::ArchivoW(const Archivo& arch, const string& nombreArchivo):
 }
 
 ArchivoW::ArchivoW(const ArchivoW& arch):
-  Archivo(arch), fOut(fileName, ios::binary)
+  Archivo(arch), fOut(arch.fileName, ios::binary)
 { }
 
 ArchivoW::~ArchivoW()

@@ -4,6 +4,7 @@ ArchivoWAVR::ArchivoWAVR(const string& nombreArchivo):
   ArchivoR(nombreArchivo)
 {
   numeroCanales = extraerUShort(22);
+  frecuenciaMuestreo = extraerUInt(24);
   bitsPorMuestra = extraerUShort(34);
   bytesPorMuestra = bitsPorMuestra/8;
   tamanoAudio = extraerUInt(40);
@@ -54,10 +55,9 @@ ArchivoWAVW ArchivoWAVR::operator*(const ArchivoWAVR& arch) const
   ArchivoWAVW salida(*this, arch, str);
   for(unsigned int i = 0, j = 0, k = 0; i < salida.numeroMuestras; i += salida.numeroCanales, j += numeroCanales, k += arch.numeroCanales)
   {
-    pair<short, short> m1 = j>numeroMuestras?pair<short,short>(0,0):extraerMuestra(44 + j*bytesPorMuestra);
-    pair<short, short> m2 = k>arch.numeroMuestras?pair<short,short>(0,0):arch.extraerMuestra(44 + k*(arch.bytesPorMuestra));
+    pair<short, short> m1 = extraerMuestra(44 + j*bytesPorMuestra);
+    pair<short, short> m2 = arch.extraerMuestra(44 + k*(arch.bytesPorMuestra));
     pair<short, short> resultado;
-
     complex<double> m1C = map(m1, -32768, 32767, -1, 1);
     complex<double> m2C = map(m2, -32768, 32767, -1, 1);
     complex<double> rC(0,0);
@@ -111,8 +111,8 @@ ArchivoWAVW ArchivoWAVR::transformadaFourier(const string& name, const unsigned 
     str.erase(str.end() - 4, str.end());
     str += " transformado con opcion " + std::to_string(opcion) + ".wav";
   }
-  ArchivoWAVW salida(*this, str);
-  for(unsigned int k = 0; k < numeroMuestras; k += numeroCanales)
+  ArchivoWAVW salida(str, fileSize, 2, frecuenciaMuestreo, bitsPorMuestra, 2*(tamanoAudio));
+  for(unsigned int k = 0; k < salida.numeroMuestras; k += salida.numeroCanales)
   {
     complex<double> X_k(0.0,0.0);
     for(unsigned int n = 0; n < numeroMuestras; n += numeroCanales)
@@ -128,6 +128,25 @@ ArchivoWAVW ArchivoWAVR::transformadaFourier(const string& name, const unsigned 
   }
   return salida;
 }
+
+ArchivoWAVW::ArchivoWAVW(const string& nombreArchivo, unsigned int tamArchivo, unsigned short numCanales, unsigned int frecMuestreo, unsigned int bitsPerSample, unsigned int tamAudio):
+  ArchivoWAV(numCanales, frecMuestreo, bitsPerSample, tamAudio),
+  ArchivoW(nombreArchivo, tamArchivo, new unsigned char[tamArchivo])
+{
+  escribirInt(0x46464952, 0);
+  escribirInt(fileSize-8, 4);
+  escribirInt(0x45564157, 8);
+  escribirInt(0x20746d66, 12);
+  escribirInt(16, 16);
+  escribirShort(1, 20);
+  escribirShort(numeroCanales, 22);
+  escribirInt(frecuenciaMuestreo, 24);
+  escribirInt(frecuenciaMuestreo * numeroCanales * bytesPorMuestra, 28);
+  escribirShort(numeroCanales * bytesPorMuestra, 32);
+  escribirShort(bitsPorMuestra, 34);
+  escribirInt(0x61746164, 36);
+  escribirInt(tamanoAudio, 40);
+};
 
 ArchivoWAVW::ArchivoWAVW(const ArchivoWAVR& arch1, const ArchivoWAVR& arch2, const string& nombreArchivo):
   ArchivoWAV(arch1, arch2),
