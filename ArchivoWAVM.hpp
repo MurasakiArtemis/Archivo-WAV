@@ -27,6 +27,7 @@ class ArchivoWAVW : public ArchivoWAV, public ArchivoW
 {
   friend class ArchivoWAVR;
 public:
+  ArchivoWAVW(const string& nombreArchivo, unsigned int tamArchivo, unsigned short numCanales, unsigned int frecMuestreo, unsigned int bitsPerSample, unsigned int tamAudio);
   ArchivoWAVW(const ArchivoWAVR&, const ArchivoWAVR&, const string&);
   ArchivoWAVW(const ArchivoWAVR&, const string&);
   ArchivoWAVW(const ArchivoWAVW&);

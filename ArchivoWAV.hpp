@@ -18,6 +18,7 @@ class ArchivoWAV
   friend std::ostream& operator<<(std::ostream&, const ArchivoWAV&);
 public:
   ArchivoWAV();
+  ArchivoWAV(unsigned short numCanales, unsigned int frecMuestreo, unsigned int bitsPerSample, unsigned int tamAudio);
   ArchivoWAV(const ArchivoWAV&);
   ArchivoWAV(const ArchivoWAV&, const ArchivoWAV&);
   virtual ~ArchivoWAV();
@@ -31,6 +32,7 @@ protected:
   unsigned short bytesPorMuestra;
   unsigned int tamanoAudio;
   unsigned short numeroMuestras;
+  unsigned short frecuenciaMuestreo;
 };
 
 #endif

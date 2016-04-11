@@ -2,7 +2,11 @@
 #include <cstring>
 
 ArchivoWAV::ArchivoWAV():
-  numeroCanales(0), bitsPorMuestra(0), bytesPorMuestra(0), tamanoAudio(0), numeroMuestras(0)
+  numeroCanales(0), bitsPorMuestra(0), bytesPorMuestra(0), tamanoAudio(0), numeroMuestras(0), frecuenciaMuestreo(0)
+{ }
+
+ArchivoWAV::ArchivoWAV(unsigned short numCanales, unsigned int frecMuestreo, unsigned int bitsPerSample, unsigned int tamAudio):
+  numeroCanales(numCanales), bitsPorMuestra(bitsPerSample), bytesPorMuestra(bitsPerSample/8), tamanoAudio(tamAudio), numeroMuestras(tamAudio/(bitsPerSample/8)), frecuenciaMuestreo(frecMuestreo)
 { }
 
 ArchivoWAV::ArchivoWAV(const ArchivoWAV& arch):
@@ -11,11 +15,11 @@ ArchivoWAV::ArchivoWAV(const ArchivoWAV& arch):
 { }
 
 ArchivoWAV::ArchivoWAV(const ArchivoWAV& arch, const ArchivoWAV& arch1):
-  numeroCanales(arch.numeroCanales>arch1.numeroCanales?arch.numeroCanales:arch1.numeroCanales),
-  bitsPorMuestra(arch.bitsPorMuestra>arch1.bitsPorMuestra?arch.bitsPorMuestra:arch1.bitsPorMuestra),
-  bytesPorMuestra(arch.bytesPorMuestra>arch1.bytesPorMuestra?arch.bytesPorMuestra:arch1.bytesPorMuestra),
-  tamanoAudio(arch.tamanoAudio>arch1.tamanoAudio?arch.tamanoAudio:arch1.tamanoAudio),
-  numeroMuestras(arch.numeroMuestras>arch1.numeroMuestras?arch.numeroMuestras:arch1.numeroMuestras)
+  numeroCanales(arch.numeroCanales<arch1.numeroCanales?arch.numeroCanales:arch1.numeroCanales),
+  bitsPorMuestra(arch.bitsPorMuestra<arch1.bitsPorMuestra?arch.bitsPorMuestra:arch1.bitsPorMuestra),
+  bytesPorMuestra(arch.bytesPorMuestra<arch1.bytesPorMuestra?arch.bytesPorMuestra:arch1.bytesPorMuestra),
+  tamanoAudio(arch.tamanoAudio<arch1.tamanoAudio?arch.tamanoAudio:arch1.tamanoAudio),
+  numeroMuestras(arch.numeroMuestras<arch1.numeroMuestras?arch.numeroMuestras:arch1.numeroMuestras)
 { }
 
 double ArchivoWAV::map(double x, double inMin, double inMax, double outMin, double outMax) const
@@ -43,5 +47,6 @@ std::ostream& operator<<(std::ostream& out, const ArchivoWAV& arch)
   out << "Bytes por muestra: " << arch.bytesPorMuestra << std::endl;
   out << "Tamaño del audio: " << arch.tamanoAudio << std::endl;
   out << "Número de muestras: " << arch.numeroMuestras << std::endl;
+  out << "Frecuencia de muestreo: " << arch.frecuenciaMuestreo << std::endl;
   return out;
 }
