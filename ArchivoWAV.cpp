@@ -1,6 +1,6 @@
 #include "ArchivoWAV.hpp"
 #include <cstring>
-#include <iostream>
+
 ArchivoWAV::ArchivoWAV():
   numeroCanales(0), bitsPorMuestra(0), bytesPorMuestra(0), tamanoAudio(0), numeroMuestras(0), frecuenciaMuestreo(0)
 { }
