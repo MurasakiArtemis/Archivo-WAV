@@ -3,7 +3,9 @@
 
 Archivo::Archivo(const string& nombreArchivo, unsigned int tamano, unsigned char* datos):
 fileName(nombreArchivo), fileSize(tamano), fileData(datos)
-{ }
+{
+  memset(fileData, 0, fileSize);
+}
 
 Archivo::Archivo(const Archivo& arch):
 fileName(arch.fileName), fileSize(arch.fileSize), fileData(new unsigned char[fileSize])
@@ -23,7 +25,7 @@ char Archivo::extraerSByte(unsigned int i) const
 
 unsigned short Archivo::extraerUShort(unsigned int i) const
 {
-  return (((unsigned short)fileData[i]) | ((unsigned short)fileData[i+1]) << 8);
+  return *((unsigned short*)(fileData + i));//(((unsigned short)fileData[i]) | ((unsigned short)fileData[i+1]) << 8);
 }
 
 short Archivo::extraerSShort(unsigned int i) const
