@@ -3,8 +3,7 @@
   \author Erwin Hdz <erwin@linux-ph79>
   \date   Mon Apr 11 14:36:24 2016
   
-  \brief  Declaración de la clase Archivo, almacena el nombre de archivo, tamaño e información del mismo, sin proporcionar médios para llenar dicha información.
-  Proporciona métodos para extraer los distintos tipos de dato básicos del archivo
+  \brief  Declaración de la clase Archivo
 */
 
 #ifndef ARCHIVO_HPP
@@ -14,6 +13,12 @@
 #include <string>
 
 using std::string;
+//! Clase Archivo
+/*! 
+  Declaración de la clase Archivo, almacena el nombre de archivo, tamaño e información del mismo
+  No proporciona medios para llenar la información.
+  Proporciona métodos para extraer los distintos tipos de dato básicos del archivo
+ */
 
 class Archivo
 {
@@ -104,9 +109,9 @@ public:
   */
   long extraerSLong(unsigned int i) const;
 protected:
-  string fileName;
-  unsigned int fileSize;
-  unsigned char* fileData;
+  string fileName;		/*!< Nombre del archivo */
+  unsigned int fileSize;	/*!< Tamaño del archivo */
+  unsigned char* fileData;	/*!< Bloque de información del archivo */
 };
 
 #endif
