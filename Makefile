@@ -16,4 +16,4 @@ Archivo.o: Archivo.cpp Archivo.hpp
 
 
 clean:
-	rm *~ *.out *.o
+	rm *.out *.o

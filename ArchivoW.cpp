@@ -2,7 +2,7 @@
 #include <cstring>
 
 ArchivoW::ArchivoW(const string& nombreArchivo, unsigned int tamano, unsigned char* datos):
-Archivo(nombreArchivo, tamano, datos), fOut(fileName, ios::binary)
+  Archivo(nombreArchivo, tamano, datos), fOut(fileName, ios::binary)
 { }
 
 ArchivoW::ArchivoW(const Archivo& arch, const string& nombreArchivo):
@@ -28,18 +28,15 @@ void ArchivoW::escribirByte(unsigned char byte, unsigned int posicion)
 
 void ArchivoW::escribirShort(unsigned short entero, unsigned int posicion)
 {
-  for(unsigned int i = 0; i < sizeof(entero); i++)
-    escribirByte((unsigned char)(entero >> 8*i), posicion + i);
+  memcpy(fileData+posicion, &entero, sizeof(unsigned short));
 }
 
 void ArchivoW::escribirInt(unsigned int entero, unsigned int posicion)
 {
-  for(unsigned int i = 0; i < sizeof(entero); i++)
-    escribirByte((unsigned char)(entero >> 8*i), posicion + i);
+  memcpy(fileData+posicion, &entero, sizeof(unsigned int));
 }
 
 void ArchivoW::escribirLong(unsigned long entero, unsigned int posicion)
 {
-  for(unsigned int i = 0; i < sizeof(entero); i++)
-    escribirByte((unsigned char)(entero >> 8*i), posicion + i);
+  memcpy(fileData+posicion, &entero, sizeof(unsigned long));
 }
