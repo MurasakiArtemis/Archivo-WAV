@@ -123,6 +123,8 @@ ArchivoWAVW ArchivoWAVR::transformadaFourier(const string& name, const unsigned 
       complex<double> e = complex<double>(std::cos(exponente).real(), -std::sin(exponente).real());
       X_k += x_n*e;
     }
+    std::cout << std::to_string(k/2) << ": " << X_k << std::endl;
+    X_k /= 16;
     pair<short, short> resultado = map(X_k, -1, 1, -32768, 32768);
     salida.insertarMuestra(resultado, 44 + k*bytesPorMuestra);
   }
