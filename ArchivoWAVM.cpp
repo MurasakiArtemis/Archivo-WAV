@@ -58,11 +58,11 @@ ArchivoWAVW ArchivoWAVR::operator*(const ArchivoWAVR& arch) const
     pair<short, short> m1 = extraerMuestra(44 + j*bytesPorMuestra);
     pair<short, short> m2 = arch.extraerMuestra(44 + k*(arch.bytesPorMuestra));
     pair<short, short> resultado;
-    complex<double> m1C = map(m1, -32768, 32767, -1, 1);
-    complex<double> m2C = map(m2, -32768, 32767, -1, 1);
+    complex<double> m1C = map(m1, -32768, 32768, -1, 1);
+    complex<double> m2C = map(m2, -32768, 32768, -1, 1);
     complex<double> rC(0,0);
     rC = m1C*m2C;
-    resultado = map(rC, -1, 1, -32768, 32767);
+    resultado = map(rC, -1, 1, -32768, 32768);
     salida.insertarMuestra(resultado, 44 + i*bytesPorMuestra);
   }
   return salida;
@@ -117,13 +117,13 @@ ArchivoWAVW ArchivoWAVR::transformadaFourier(const string& name, const unsigned 
     complex<double> X_k(0.0,0.0);
     for(unsigned int n = 0; n < numeroMuestras; n += numeroCanales)
     {
-      pair<short, short> muestra = extraerMuestra(44 + k*bytesPorMuestra);
-      complex<double> x_n = map(muestra, -32768, 32767, -1, 1);
-      complex<double> exponente = 2*std::acos(complex<double>(-1.0, 0)).real()*k*n/numeroMuestras;
+      pair<short, short> muestra = extraerMuestra(44 + n*bytesPorMuestra);
+      complex<double> x_n = map(muestra, -32768, 32768, -1, 1);
+      complex<double> exponente = 2*std::acos(complex<double>(-1.0, 0)).real()*(k/2)*n/numeroMuestras;
       complex<double> e = complex<double>(std::cos(exponente).real(), -std::sin(exponente).real());
       X_k += x_n*e;
     }
-    pair<short, short> resultado = map(X_k, -1, 1, -32768, 32767);
+    pair<short, short> resultado = map(X_k, -1, 1, -32768, 32768);
     salida.insertarMuestra(resultado, 44 + k*bytesPorMuestra);
   }
   return salida;
