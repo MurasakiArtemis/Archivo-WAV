@@ -111,23 +111,28 @@ ArchivoWAVW ArchivoWAVR::transformadaFourier(const string& name, const unsigned 
     str.erase(str.end() - 4, str.end());
     str += " transformado con opcion " + std::to_string(opcion) + ".wav";
   }
-  ArchivoWAVW salida(str, fileSize, 2, frecuenciaMuestreo, bitsPorMuestra, 2*(tamanoAudio));
+  ArchivoWAVW salida(str, fileSize + tamanoAudio, 2, frecuenciaMuestreo, bitsPorMuestra, 2*(tamanoAudio));
+  complex<double>* X = new complex<double>[salida.numeroMuestras];
+  double acum = -100;
   for(unsigned int k = 0; k < salida.numeroMuestras; k += salida.numeroCanales)
   {
-    complex<double> X_k(0.0,0.0);
     for(unsigned int n = 0; n < numeroMuestras; n += numeroCanales)
     {
       pair<short, short> muestra = extraerMuestra(44 + n*bytesPorMuestra);
       complex<double> x_n = map(muestra, -32768, 32768, -1, 1);
       complex<double> exponente = 2*std::acos(complex<double>(-1.0, 0)).real()*(k/2)*n/numeroMuestras;
       complex<double> e = complex<double>(std::cos(exponente).real(), -std::sin(exponente).real());
-      X_k += x_n*e;
+      X[k] += x_n*e;
     }
-    std::cout << std::to_string(k/2) << ": " << X_k << std::endl;
-    X_k /= 16;
-    pair<short, short> resultado = map(X_k, -1, 1, -32768, 32768);
+    if(X[k].real() > acum)
+      acum = X[k].real();
+  }
+  for(unsigned int k = 0; k < salida.numeroMuestras; k += salida.numeroCanales)
+  {
+    pair<short, short> resultado = map(X[k], -acum, acum, -32768, 32767);
     salida.insertarMuestra(resultado, 44 + k*bytesPorMuestra);
   }
+  delete[] X;
   return salida;
 }
 
