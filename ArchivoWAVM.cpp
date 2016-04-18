@@ -102,6 +102,28 @@ ArchivoWAVW ArchivoWAVR::simularCircuitoRC(const string& name, unsigned int numM
   return salida;
 }
 
+double transfFourier(const ArchivoWAVR& file, complex<double>* X, unsigned short numeroMuestras, unsigned short numeroCanales)
+{
+  double acumR = -100, acumI = -100;
+  const double pi = std::acos(complex<double>(-1.0, 0)).real();
+  for(unsigned int k = 0; k < numeroMuestras; k += numeroCanales)
+  {
+    for(unsigned int n = 0; n < file.numeroMuestras; n += file.numeroCanales)
+    {
+      pair<short, short> muestra = file.extraerMuestra(44 + n*(file.bytesPorMuestra));
+      complex<double> x_n = file.map(muestra, -32768, 32768, -1, 1);
+      complex<double> exponente = 2*pi*(k/2)*n/(file.numeroMuestras);
+      complex<double> e = complex<double>(std::cos(exponente).real(), -std::sin(exponente).real());
+      X[k] += x_n*e;
+    }
+    if(X[k].real() > acumR)
+      acumR = X[k].real();
+    if(X[k].imag() > acumI)
+      acumI = X[k].imag();
+  }
+  return acumR > acumI? acumR: acumI;
+}
+
 ArchivoWAVW ArchivoWAVR::transformadaFourier(const string& name, const unsigned int opcion)
 {
   string str(name);
@@ -113,24 +135,37 @@ ArchivoWAVW ArchivoWAVR::transformadaFourier(const string& name, const unsigned 
   }
   ArchivoWAVW salida(str, fileSize + tamanoAudio, 2, frecuenciaMuestreo, bitsPorMuestra, 2*(tamanoAudio));
   complex<double>* X = new complex<double>[salida.numeroMuestras];
-  double acum = -100;
-  for(unsigned int k = 0; k < salida.numeroMuestras; k += salida.numeroCanales)
+  double acum = transfFourier(*this, X, salida.numeroMuestras, salida.numeroCanales);
+  switch(opcion)
   {
-    for(unsigned int n = 0; n < numeroMuestras; n += numeroCanales)
+  case 0:
+    for(unsigned int k = 0; k < salida.numeroMuestras; k += salida.numeroCanales)
+    {
+      pair<short, short> resultado = map(X[k], -acum, acum, -32768, 32767);
+      salida.insertarMuestra(resultado, 44 + k*bytesPorMuestra);
+    }
+    break;
+  case 1:
+    for(unsigned int k = 0, n = 0; k < salida.numeroMuestras; k += salida.numeroCanales, n += numeroCanales)
     {
       pair<short, short> muestra = extraerMuestra(44 + n*bytesPorMuestra);
-      complex<double> x_n = map(muestra, -32768, 32768, -1, 1);
-      complex<double> exponente = 2*std::acos(complex<double>(-1.0, 0)).real()*(k/2)*n/numeroMuestras;
-      complex<double> e = complex<double>(std::cos(exponente).real(), -std::sin(exponente).real());
-      X[k] += x_n*e;
+      double magnitud = std::abs(X[k]);
+      double raizDos = std::sqrt(complex<double>(2, 0)).real();
+      pair<short, short> resultado(muestra.first, map(magnitud, -raizDos*acum, raizDos*acum, -32768, 32767));
+      salida.insertarMuestra(resultado, 44 + k*bytesPorMuestra);
     }
-    if(X[k].real() > acum)
-      acum = X[k].real();
-  }
-  for(unsigned int k = 0; k < salida.numeroMuestras; k += salida.numeroCanales)
-  {
-    pair<short, short> resultado = map(X[k], -acum, acum, -32768, 32767);
-    salida.insertarMuestra(resultado, 44 + k*bytesPorMuestra);
+    break;
+  case 2:
+    for(unsigned int k = 0; k < salida.numeroMuestras; k += salida.numeroCanales)
+    {
+      double magnitud = std::abs(X[k]);
+      double fase = std::arg(X[k]);
+      double raizDos = std::sqrt(complex<double>(2, 0)).real();
+      double pi = std::acos(complex<double>(-1.0, 0)).real();
+      pair<short, short> resultado(map(magnitud, -raizDos*acum, raizDos*acum, -32768, 32767), map(fase, -pi/4, pi/4, -32768, 32767));
+      salida.insertarMuestra(resultado, 44 + k*bytesPorMuestra);
+    }
+    break;
   }
   delete[] X;
   return salida;
