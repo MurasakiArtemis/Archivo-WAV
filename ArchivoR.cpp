@@ -1,6 +1,6 @@
 #include "ArchivoR.hpp"
 
-ArchivoR::ArchivoR(const string& nombreArchivo, unsigned int tamano, unsigned char* datos):
+ArchivoR::ArchivoR(const string& nombreArchivo):
   Archivo(nombreArchivo)
 {
   fIn = ifstream(nombreArchivo, ios::binary);
