@@ -13,6 +13,8 @@ using std::string;
 using std::pair;
 using std::complex;
 
+class ArchivoWAVR;
+
 class ArchivoWAV
 {
   friend std::ostream& operator<<(std::ostream&, const ArchivoWAV&);
