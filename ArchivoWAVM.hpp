@@ -12,6 +12,7 @@ class ArchivoWAVR;
 class ArchivoWAVR : public ArchivoWAV, public ArchivoR
 {
   friend class ArchivoWAVW;
+  friend double transfFourier(const ArchivoWAVR& file, complex<double>* X, unsigned short numeroMuestras, unsigned short numeroCanales);
 public:
   ArchivoWAVR(const string&);
   ArchivoWAVR(const ArchivoWAVR&);
