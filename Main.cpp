@@ -22,8 +22,10 @@ void imprimeError(int opcion, char **argv)
     std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<opción>=0] [<archivo de salida>]" << std::endl;
     break;
   case 5:
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>]" << std::endl;
     break;
   case 6:
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>]" << std::endl;
     break;
   default:
     std::cout << "Opción inválida" << std::endl;
@@ -36,7 +38,7 @@ int main(int argc, char *argv[])
   if(argc < 2)
   {
     std::cout << "El modo de uso es: " << argv[0] << " <opción> [<argumentos de opción>]^+" << std::endl;
-    std::cout << "Opciones:\n0: Copia\n1: División\n2: Simular circuito\n3: Producto\n4: Transformada" << std::endl;
+    std::cout << "Opciones:\n0: Copia\n1: División\n2: Simular circuito\n3: Producto\n4: Transformada\n5: Transformada Inversa" << std::endl;
     return -1;
   }
   int opcion = std::stoi(argv[1]);
@@ -133,7 +135,37 @@ int main(int argc, char *argv[])
       ArchivoWAVW b(a.transformadaFourier(str, transfOpcion));
     }
     break;
+  case 5:
+    {
+      if(argc < 3 || argc > 4)
+      {
+	imprimeError(opcion, argv);
+	return -1;
+      }
+      ArchivoWAVR a(argv[2]);
+      std::string str;
+      if(argc == 4)
+	str = argv[3];
+      ArchivoWAVW b(a.transformadaInversa(str));
+    }
+    break;
+  case 6:
+    {
+      if(argc < 3 || argc > 4)
+      {
+	imprimeError(opcion, argv);
+	return -1;
+      }
+      ArchivoWAVR a(argv[2]);
+      std::string str;
+      if(argc == 4)
+	str = argv[3];
+      ArchivoWAVN b(a.transformadaFourier(str));
+      ArchivoWAVW c(b.transformadaInversa(str));
+    }
+    break;
   default:
+    imprimeError(opcion, argv);
     break;
   }
   //  ArchivoWAVW e(a.simularCircuitoRC(""));
