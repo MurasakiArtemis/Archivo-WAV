@@ -56,34 +56,6 @@ public:
     
   */
   virtual ~ArchivoW();
-  //! Escribe un byte en el archivo
-  /*! 
-    
-    \param byte El byte a escribir
-    \param posicion La posición dentro del archivo en la cual se escribirá
-  */
-  void escribirByte(unsigned char byte, unsigned int posicion);
-  //! Escribe un entero corto en el archivo
-  /*! 
-    
-    \param entero El entero corto a escribir
-    \param posicion La posición dentro del archivo en la cual se escribirá
-  */
-  void escribirShort(unsigned short entero, unsigned int posicion);
-  //! Escribe un entero en el archivo
-  /*! 
-    
-    \param entero El entero corto a escribir
-    \param posicion La posición dentro del archivo en la cual se escribirá
-  */
-  void escribirInt(unsigned int entero, unsigned int posicion);
-  //! Escribe un entero largo en el archivo
-  /*! 
-    
-    \param entero El entero largo a escribir
-    \param posicion La posición dentro del archivo en la cual se escribirá
-  */
-  void escribirLong(unsigned long entero, unsigned int posicion);
 protected:
   ofstream fOut;		/*!< El ofstream empleado para escribir la información */
 };

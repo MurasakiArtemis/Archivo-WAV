@@ -57,3 +57,23 @@ Archivo::~Archivo()
 {
   delete[] fileData;
 }
+
+void Archivo::escribirByte(unsigned char byte, unsigned int posicion)
+{
+  fileData[posicion] = byte;
+}
+
+void Archivo::escribirShort(unsigned short entero, unsigned int posicion)
+{
+  memcpy(fileData+posicion, &entero, sizeof(unsigned short));
+}
+
+void Archivo::escribirInt(unsigned int entero, unsigned int posicion)
+{
+  memcpy(fileData+posicion, &entero, sizeof(unsigned int));
+}
+
+void Archivo::escribirLong(unsigned long entero, unsigned int posicion)
+{
+  memcpy(fileData+posicion, &entero, sizeof(unsigned long));
+}

@@ -20,23 +20,3 @@ ArchivoW::~ArchivoW()
   fOut.write((char*)fileData, fileSize);
   fOut.close();
 }
-
-void ArchivoW::escribirByte(unsigned char byte, unsigned int posicion)
-{
-  fileData[posicion] = byte;
-}
-
-void ArchivoW::escribirShort(unsigned short entero, unsigned int posicion)
-{
-  memcpy(fileData+posicion, &entero, sizeof(unsigned short));
-}
-
-void ArchivoW::escribirInt(unsigned int entero, unsigned int posicion)
-{
-  memcpy(fileData+posicion, &entero, sizeof(unsigned int));
-}
-
-void ArchivoW::escribirLong(unsigned long entero, unsigned int posicion)
-{
-  memcpy(fileData+posicion, &entero, sizeof(unsigned long));
-}
