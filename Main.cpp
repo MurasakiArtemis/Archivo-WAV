@@ -27,6 +27,9 @@ void imprimeError(int opcion, char **argv)
   case 6:
     std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>]" << std::endl;
     break;
+  case 7:
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> <filtro> [<archivo de salida>]" << std::endl;
+    break;
   default:
     std::cout << "Opción inválida" << std::endl;
     break;
@@ -38,7 +41,7 @@ int main(int argc, char *argv[])
   if(argc < 2)
   {
     std::cout << "El modo de uso es: " << argv[0] << " <opción> [<argumentos de opción>]^+" << std::endl;
-    std::cout << "Opciones:\n0: Copia\n1: División\n2: Simular circuito\n3: Producto\n4: Transformada\n5: Transformada Inversa" << std::endl;
+    std::cout << "Opciones:\n0: Copia\n1: División\n2: Simular circuito\n3: Producto\n4: Transformada\n5: Transformada Inversa\n7: Convolución" << std::endl;
     return -1;
   }
   int opcion = std::stoi(argv[1]);
@@ -83,7 +86,7 @@ int main(int argc, char *argv[])
     break;
   case 2:
     {
-      if(argc < 3 || argc > 6)
+      if(argc < 3 || argc > 7)
       {	
 	imprimeError(opcion, argv);
 	return -1;
@@ -103,7 +106,7 @@ int main(int argc, char *argv[])
         frecCorte = 3000;
       else
         frecCorte = std::stoi(argv[5]);
-      ArchivoWAVW b = a.simularCircuitoRC(str, numMuestras, frecCorte);
+      ArchivoWAVW b = a.simularCircuitoRC(str, numMuestras, frecCorte, argc == 7);
     }
     break;
   case 3:
@@ -164,11 +167,24 @@ int main(int argc, char *argv[])
       ArchivoWAVW c(b.transformadaInversa(str));
     }
     break;
+  case 7:
+    {
+      if(argc < 4 || argc > 5)
+      {
+	imprimeError(opcion, argv);
+	return -1;
+      }
+      ArchivoWAVR a(argv[2]);
+      ArchivoWAVR b(argv[3]);
+      std::string str;
+      if(argc == 5)
+	str = argv[4];
+      ArchivoWAVW c((a.transformadaFourier("")*b.transformadaFourier("")).transformadaInversa(str));
+    }
+    break;
   default:
     imprimeError(opcion, argv);
     break;
   }
-  //  ArchivoWAVW e(a.simularCircuitoRC(""));
-  //  std::cout << e << std::endl;
   return 0;
 }
