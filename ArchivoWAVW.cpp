@@ -1,11 +1,11 @@
-#include "ArchivoWAVM.hpp"
+#include "ArchivoWAVW.hpp"
 
 ArchivoWAVW::ArchivoWAVW(const string& nombreArchivo, unsigned int tamArchivo, unsigned short numCanales, unsigned int frecMuestreo, unsigned int bitsPerSample, unsigned int tamAudio):
-  ArchivoWAV(nombreArchivo, tamArchivo, numCanales, frecMuestreo, bitsPerSample, tamAudio);
+  ArchivoWAV(nombreArchivo, tamArchivo, numCanales, frecMuestreo, bitsPerSample, tamAudio),
   fOut(fileName, ios::binary)
 { };
 
-ArchivoWAVW::ArchivoWAVW(const ArchivoWAV& arch1, const ArchivoWAVR& arch2, const string& nombreArchivo):
+ArchivoWAVW::ArchivoWAVW(const ArchivoWAV& arch1, const ArchivoWAV& arch2, const string& nombreArchivo):
   ArchivoWAV(arch1, arch2, nombreArchivo),
   fOut(nombreArchivo, ios::binary)
 { }
