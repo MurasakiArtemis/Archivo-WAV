@@ -1,4 +1,6 @@
-#include "ArchivoWAVM.hpp"
+#include "ArchivoWAV.hpp"
+#include "ArchivoWAVW.hpp"
+#include "ArchivoWAVR.hpp"
 #include <iostream>
 #include <string>
 
@@ -81,7 +83,7 @@ int main(int argc, char *argv[])
       }
       ArchivoWAVR a(argv[2]);
       int divisor = std::stoi(argv[3]);
-      ArchivoWAVW b = a/divisor;
+      ArchivoWAVW b(a/divisor);
     }
     break;
   case 2:
@@ -106,7 +108,7 @@ int main(int argc, char *argv[])
         frecCorte = 3000;
       else
         frecCorte = std::stoi(argv[5]);
-      ArchivoWAVW b = a.simularCircuitoRC(str, numMuestras, frecCorte, argc == 7);
+      ArchivoWAVW b(a.simularCircuitoRC(str, numMuestras, frecCorte, argc == 7));
     }
     break;
   case 3:
@@ -118,7 +120,7 @@ int main(int argc, char *argv[])
       }
       ArchivoWAVR a(argv[2]);
       ArchivoWAVR b(argv[3]);
-      ArchivoWAVW c = a*b;
+      ArchivoWAVW c(a*b);
     }
     break;
   case 4:
@@ -163,7 +165,7 @@ int main(int argc, char *argv[])
       std::string str;
       if(argc == 4)
 	str = argv[3];
-      ArchivoWAVN b(a.transformadaFourier(str));
+      ArchivoWAV b(a.transformadaFourier(str));
       ArchivoWAVW c(b.transformadaInversa(str));
     }
     break;
