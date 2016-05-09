@@ -3,7 +3,7 @@
 
 ArchivoWAV::ArchivoWAV(const string& nombreArchivo, unsigned int tamano, unsigned short numCanales, unsigned int frecMuestreo, unsigned int bitsPerSample, unsigned int tamAudio):
   numeroCanales(numCanales), bitsPorMuestra(bitsPerSample), bytesPorMuestra(bitsPerSample/8), tamanoAudio(tamAudio),
-  numeroMuestras(tamAudio/(bitsPerSample/8)), frecuenciaMuestreo(frecMuestreo),
+  numeroMuestras(tamAudio/((bitsPerSample == 0? 8 : bitsPerSample)/8)), frecuenciaMuestreo(frecMuestreo),
   fileName(nombreArchivo), fileSize(tamano),
   fileData(new unsigned char[fileSize])
 {
@@ -106,6 +106,7 @@ ArchivoWAV ArchivoWAV::operator/(const double& valor) const
   str += std::to_string((int)valor);
   str += ".wav";
   ArchivoWAV salida(*this, str);
+  std::cout << numeroMuestras << " " << numeroCanales << std::endl;
   for(unsigned int i = 0; i < numeroMuestras; i += numeroCanales)
   {
     pair<short, short> muestra = extraerMuestra(44 + i*bytesPorMuestra);
