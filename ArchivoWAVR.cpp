@@ -1,4 +1,5 @@
 #include "ArchivoWAVR.hpp"
+#include <cstring>
 
 ArchivoWAVR::ArchivoWAVR(const string& nombreArchivo):
   ArchivoWAV(nombreArchivo)
@@ -7,16 +8,18 @@ ArchivoWAVR::ArchivoWAVR(const string& nombreArchivo):
   fIn.seekg(0, ios::end);
   fileSize = fIn.tellg();
   fIn.seekg(0, ios::beg);
-  if(fileData != nullptr)
-    delete[] fileData;
-  fileData = new unsigned char[fileSize];
-  fIn.read((char*)fileData, fileSize);
+  if(fileMetadata != nullptr)
+    delete[] fileMetadata;
+  fileMetadata = new unsigned char[fileSize];
+  fIn.read((char*)fileMetadata, fileSize);
   numeroCanales = extraerUShort(22);
   bitsPorMuestra = extraerUShort(34);
   bytesPorMuestra = bitsPorMuestra/8;
   tamanoAudio = extraerUInt(40);
   numeroMuestras = tamanoAudio/bytesPorMuestra;
   frecuenciaMuestreo = extraerUShort(24);
+  valarray<short> temporaryData = valarray<short>((short*)(fileMetadata+44), numeroMuestras);
+  fileData = map(temporaryData, -32768, 32767, -1, 1);
 }
 
 ArchivoWAVR::~ArchivoWAVR()
