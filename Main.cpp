@@ -15,16 +15,16 @@ void imprimeError(int opcion, char **argv)
     std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> <divisor>" << std::endl;
     break;
   case 2:
-    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>] [<número de muestras>=10] [<frecuencia>=3000]" << std::endl;
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>] [<número de muestras>=10] [<frecuencia>=3000] [ideal]" << std::endl;
     break;
   case 3:
     std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <factor1> <factor2>" << std::endl;
     break;
   case 4:
-    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<opción>=0] [<archivo de salida>]" << std::endl;
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [lenta] [<archivo de salida>] [<opción>=0]" << std::endl;
     break;
   case 5:
-    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>]" << std::endl;
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [lenta] [<archivo de salida>]" << std::endl;
     break;
   case 6:
     std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>]" << std::endl;
@@ -125,33 +125,39 @@ int main(int argc, char *argv[])
     break;
   case 4:
     {
+      if(argc < 3 || argc > 6)
+      {
+	imprimeError(opcion, argv);
+	return -1;
+      }
+      ArchivoWAVR a(argv[2]);
+      bool rapida = true;
+      if(argc > 3)
+	rapida = !(string(argv[3]) == "lenta");
+      int transfOpcion = 0;
+      std::string str;
+      if(argc > 4)
+	str = argv[4];
+      if(argc > 5)
+	transfOpcion = std::stoi(argv[5]);
+      ArchivoWAVW b(a.transformadaFourier(str, rapida, transfOpcion));
+    }
+    break;
+  case 5:
+    {
       if(argc < 3 || argc > 5)
       {
 	imprimeError(opcion, argv);
 	return -1;
       }
       ArchivoWAVR a(argv[2]);
-      std::string str;
-      if(argc == 5)
-	str = argv[4];
-      int transfOpcion = 0;
+      bool rapida = true;
       if(argc > 3)
-	transfOpcion = std::stoi(argv[3]);
-      ArchivoWAVW b(a.transformadaFourier(str, transfOpcion));
-    }
-    break;
-  case 5:
-    {
-      if(argc < 3 || argc > 4)
-      {
-	imprimeError(opcion, argv);
-	return -1;
-      }
-      ArchivoWAVR a(argv[2]);
+	rapida = !(string(argv[3]) == "lenta");
       std::string str;
-      if(argc == 4)
-	str = argv[3];
-      ArchivoWAVW b(a.transformadaInversa(str));
+      if(argc > 4)
+	str = argv[4];
+      ArchivoWAVW b(a.transformadaInversa(str, rapida));
     }
     break;
   case 6:
