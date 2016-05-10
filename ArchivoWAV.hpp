@@ -6,33 +6,39 @@
 #include <complex>
 #include <utility>
 #include <iostream>
+#include <valarray>
 
+using std::valarray;
 using std::string;
 using std::pair;
 using std::complex;
 
+double max(valarray<complex<double>> X);
+
 class ArchivoWAV
 {  
   friend std::ostream& operator<<(std::ostream&, const ArchivoWAV&);
+  friend void transformadaRapida(valarray<complex<double>>& X, const double pi);
 public:
   ArchivoWAV(const string& nombreArchivo, unsigned int tamano=0, unsigned short numCanales=0, unsigned int frecMuestreo=0, unsigned int bitsPerSample=0, unsigned int tamAudio=0);
   ArchivoWAV(const ArchivoWAV& arch, const ArchivoWAV& arch1, const string& nombreArchivo);
   ArchivoWAV(const ArchivoWAV& arch, const string& nombreArchivo);
   ArchivoWAV(const ArchivoWAV& arch);
   virtual ~ArchivoWAV();
-  pair<short, short> extraerMuestra(const unsigned int) const;
-  void insertarMuestra(pair<short, short>, unsigned int);
+  complex<double> extraerMuestra(const unsigned int) const;
+  void insertarMuestra(const complex<double>&, unsigned int);
   ArchivoWAV operator/(const double&) const;
   ArchivoWAV operator*(const double&) const;
   ArchivoWAV operator*(const ArchivoWAV&) const;
   ArchivoWAV simularCircuitoRC(const string&, unsigned int=10, unsigned int=3000, bool ideal=false) const;
-  ArchivoWAV transformadaFourier(const string&, const unsigned int=0) const;
-  ArchivoWAV transformadaInversa(const string&) const;
-  // ArchivoWAVN transformadaRapida(const string&, const unsigned int=0) const;
-  // ArchivoWAVN transformadaRapidaInversa(const string&) const;
+  ArchivoWAV transformadaFourier(const string& name, const bool rapida=true, const unsigned int opcion=0) const;
+  ArchivoWAV transformadaInversa(const string&, const bool rapida=true) const;
   double map(double, double, double, double, double) const;
   complex<double> map(const pair<short, short>&, double, double, double, double) const;
   pair<short, short> map(const complex<double>&, double, double, double, double) const;
+  valarray<complex<double>> map(const valarray<short>&, double, double, double, double) const;
+  valarray<short> map(const valarray<complex<double>>&) const;
+  short* map(valarray<short>);
   unsigned char extraerUByte(unsigned int i) const;
   char extraerSByte(unsigned int i) const;
   unsigned short extraerUShort(unsigned int i) const;
@@ -50,15 +56,15 @@ protected:
   unsigned short bitsPorMuestra;
   unsigned short bytesPorMuestra;
   unsigned int tamanoAudio;
-  unsigned short numeroMuestras;
+  unsigned int numeroMuestras;
   unsigned short frecuenciaMuestreo;
   string fileName;		/*!< Nombre del archivo */
   unsigned int fileSize;	/*!< Tamaño del archivo */
-  unsigned char* fileData;	/*!< Bloque de información del archivo */
+  unsigned char* fileMetadata;	/*!< Bloque de meta información del archivo */
+  valarray<complex<double>> fileData;		/*!< Bloque de información del archivo */
 private:
-  void convolucion(unsigned int numMuestras, complex<double>* x, const double* h, ArchivoWAV& salida) const;
-  double transformadaFourier(complex<double>* X, bool inversa, const ArchivoWAV& salida) const;
-  // double transformadaRapida(complex<double>* X, bool inversa, const ArchivoWAV& salida) const;
+  void convolucion(unsigned int numMuestras, const valarray<complex<double>> h, ArchivoWAV& salida) const;
+  void transformadaFourier(valarray<complex<double>>& X, bool inversa, const ArchivoWAV& salida) const;
 };
 
 #endif
