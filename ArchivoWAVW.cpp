@@ -20,7 +20,12 @@ ArchivoWAVW::ArchivoWAVW(const ArchivoWAV& arch):
 
 ArchivoWAVW::~ArchivoWAVW()
 {
-  fOut.write((char*)fileData, fileSize);
+  fOut.write((char*)fileMetadata, fileSize);
+  valarray<short> data = map(fileData);
+  short* array = map(data);
+  fOut.seekp(44);
+  fOut.write((char*)array, data.size()*sizeof(short));
   fOut.close();
+  delete[] array;
 }
 
