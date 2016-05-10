@@ -1,13 +1,27 @@
 #include "ArchivoWAV.hpp"
 #include <cstring>
+#include <thread>
+
+double max(valarray<complex<double>> X)
+{
+  double acumR = -100, acumI = -100;
+  for(unsigned int i = 0; i < X.size(); i++)
+  {
+    if(X[i].real() > acumR)
+      acumR = X[i].real();
+    if(X[i].imag() > acumI)
+      acumI = X[i].imag();
+  }
+  return acumR > acumI? acumR: acumI;
+}
 
 ArchivoWAV::ArchivoWAV(const string& nombreArchivo, unsigned int tamano, unsigned short numCanales, unsigned int frecMuestreo, unsigned int bitsPerSample, unsigned int tamAudio):
   numeroCanales(numCanales), bitsPorMuestra(bitsPerSample), bytesPorMuestra(bitsPerSample/8), tamanoAudio(tamAudio),
   numeroMuestras(tamAudio/((bitsPerSample == 0? 8 : bitsPerSample)/8)), frecuenciaMuestreo(frecMuestreo),
-  fileName(nombreArchivo), fileSize(tamano),
-  fileData(new unsigned char[fileSize])
+  fileName(nombreArchivo), fileSize(tamano), fileMetadata(new unsigned char[fileSize]),
+  fileData(numeroCanales == 2? numeroMuestras/2 : numeroMuestras)
 {
-  memset(fileData, 0, fileSize);
+  memset(fileMetadata, 0, fileSize);
   if(tamano != 0 && numCanales != 0 && frecMuestreo != 0 && bitsPerSample != 0 && tamAudio != 0)
   {
     escribirInt(0x46464952, 0);
@@ -34,7 +48,8 @@ ArchivoWAV::ArchivoWAV(const ArchivoWAV& arch, const ArchivoWAV& arch1, const st
   numeroMuestras(arch.numeroMuestras<arch1.numeroMuestras?arch.numeroMuestras:arch1.numeroMuestras),
   frecuenciaMuestreo(arch.frecuenciaMuestreo<arch1.frecuenciaMuestreo?arch.frecuenciaMuestreo:arch1.frecuenciaMuestreo),
   fileName(nombreArchivo), fileSize(arch.fileSize<arch1.fileSize?arch.fileSize:arch1.fileSize),
-  fileData(new unsigned char[arch.fileSize<arch1.fileSize?arch.fileSize:arch1.fileSize])
+  fileMetadata(new unsigned char[fileSize]),
+  fileData(arch.fileData.size()<arch1.fileData.size()?arch.fileData.size():arch1.fileData.size())
 { 
   for(unsigned int i = 0; i < fileSize; i++)
   {
@@ -63,234 +78,34 @@ ArchivoWAV::ArchivoWAV(const ArchivoWAV& arch, const ArchivoWAV& arch1, const st
 ArchivoWAV::ArchivoWAV(const ArchivoWAV& arch, const string& nombreArchivo):
   numeroCanales(arch.numeroCanales), bitsPorMuestra(arch.bitsPorMuestra), bytesPorMuestra(arch.bytesPorMuestra),
   tamanoAudio(arch.tamanoAudio), numeroMuestras(arch.numeroMuestras), frecuenciaMuestreo(arch.frecuenciaMuestreo),
-  fileName(nombreArchivo), fileSize(arch.fileSize), fileData(new unsigned char[fileSize])
-{ 
-  memcpy(fileData, arch.fileData, fileSize);
+  fileName(nombreArchivo), fileSize(arch.fileSize), fileMetadata(new unsigned char[fileSize]), fileData(arch.fileData)
+{
+  memcpy(fileMetadata, arch.fileMetadata, fileSize);
 }
 
 ArchivoWAV::ArchivoWAV(const ArchivoWAV& arch):
   numeroCanales(arch.numeroCanales), bitsPorMuestra(arch.bitsPorMuestra),
   bytesPorMuestra(arch.bytesPorMuestra), tamanoAudio(arch.tamanoAudio), numeroMuestras(arch.numeroMuestras),
-  frecuenciaMuestreo(arch.frecuenciaMuestreo),
-  fileName(arch.fileName), fileSize(arch.fileSize), fileData(new unsigned char[fileSize])
+  frecuenciaMuestreo(arch.frecuenciaMuestreo), fileName(arch.fileName), fileSize(arch.fileSize),
+  fileMetadata(new unsigned char[fileSize]), fileData(arch.fileData)
 { 
-  memcpy(fileData, arch.fileData, fileSize);
+  memcpy(fileMetadata, arch.fileMetadata, fileSize);
 }
 
 ArchivoWAV::~ArchivoWAV()
 {
-  delete[] fileData;
+  delete[] fileMetadata;
 }
 
-pair<short, short> ArchivoWAV::extraerMuestra(const unsigned int desplazamientoEstatico) const
+complex<double> ArchivoWAV::extraerMuestra(const unsigned int desplazamientoEstatico) const
 {
-  pair<short, short> muestra(0,0);
-  muestra.first = extraerSShort(desplazamientoEstatico);
-  if(numeroCanales == 2)
-    muestra.second = extraerSShort(desplazamientoEstatico + bytesPorMuestra);
-  return muestra;
+  return fileData[desplazamientoEstatico];
 }
 
-void ArchivoWAV::insertarMuestra(pair<short, short> muestra, unsigned int posicion)
+void ArchivoWAV::insertarMuestra(const complex<double>& muestra, unsigned int posicion)
 {
-  escribirShort(muestra.first, posicion);
-  if(numeroCanales == 2)
-    escribirShort(muestra.second, posicion + bytesPorMuestra);
+  fileData[posicion] = muestra;
 }
-
-ArchivoWAV ArchivoWAV::operator/(const double& valor) const
-{
-  string str(fileName);
-  str.erase(str.end() - 4, str.end());
-  str += " dividido entre ";
-  str += std::to_string((int)valor);
-  str += ".wav";
-  ArchivoWAV salida(*this, str);
-  std::cout << numeroMuestras << " " << numeroCanales << std::endl;
-  for(unsigned int i = 0; i < numeroMuestras; i += numeroCanales)
-  {
-    pair<short, short> muestra = extraerMuestra(44 + i*bytesPorMuestra);
-    muestra.first /= valor;
-    muestra.second /= valor;
-    salida.insertarMuestra(muestra, 44 + i*bytesPorMuestra);
-  }
-  return salida;
-}
-
-ArchivoWAV ArchivoWAV::operator*(const ArchivoWAV& arch) const
-{
-  string str(fileName);
-  str.erase(str.end() - 4, str.end());
-  string str2(arch.fileName);
-  str2.erase(str2.end() - 4, str2.end());
-  str += " multiplicado con " + str2 + ".wav";
-  ArchivoWAV salida(*this, arch, str);
-  
-  for(unsigned int i = 0, j = 0, k = 0; i < salida.numeroMuestras; i += salida.numeroCanales, j += numeroCanales, k += arch.numeroCanales)
-  {
-    pair<short, short> m1 = extraerMuestra(44 + j*bytesPorMuestra);
-    pair<short, short> m2 = arch.extraerMuestra(44 + k*(arch.bytesPorMuestra));
-    pair<short, short> resultado;
-    complex<double> m1C = map(m1, -32768, 32768, -1, 1);
-    complex<double> m2C = map(m2, -32768, 32768, -1, 1);
-    complex<double> rC(0,0);
-    rC = m1C*m2C;
-    resultado = map(rC, -1, 1, -32768, 32768);
-    salida.insertarMuestra(resultado, 44 + i*bytesPorMuestra);
-  }
-  return salida;
-}
-
-void ArchivoWAV::convolucion(unsigned int numMuestras, complex<double>* x, const double* h, ArchivoWAV& salida) const
-{
-  double acum = 0;
-  for(unsigned int i = 0; i < numMuestras; i++)
-    acum += h[i];
-  for(unsigned int i = 0; i < numeroMuestras; i += numeroCanales)
-  {
-    pair<short, short> muestra = extraerMuestra(44 + i*bytesPorMuestra);
-    complex<double> canal;
-    for(int i = numMuestras-1; i > 0; i--)
-      x[i] = x[i-1];
-    x[0] = map(muestra, -32768, 32767, -1, 1);
-    for(unsigned int i = 0; i < numMuestras; i++)
-      canal += x[i]*h[i];
-    pair<short, short> resultado = map(canal, -acum, acum, -32768, 32767);
-    salida.insertarMuestra(resultado, 44 + i*bytesPorMuestra);
-  }
-}
-
-ArchivoWAV ArchivoWAV::simularCircuitoRC(const string& name, unsigned int numMuestras, unsigned int frecCorte, bool ideal) const
-{
-  string str(name);
-  if(name == "")
-  {
-    str = string(fileName);
-    str.erase(str.end() - 4, str.end());
-    str += " filtrado a " + std::to_string(frecCorte) + ".wav";
-  }
-  ArchivoWAV salida(*this, str);
-  complex<double>* x = new complex<double>[numMuestras];
-  if(frecCorte == 3000 && numMuestras == 10 && !ideal)
-  {
-    const double h[] = { 1.0, 0.652184637, 0.4253448, 0.277403344, 0.180918199, 0.11799207, 0.076952615, 0.050187313, 0.032731395, 0.021346913};
-    this->convolucion(numMuestras, x, h, salida);
-  }
-  else if(frecCorte == 500 && numMuestras == 32 && ideal)
-  {
-    std::cout << "H" << std::endl;
-    const double h[] = {0.99997, 0.67682, 0.06662, -0.21976, -0.06665, 0.12469, 0.06662, -0.08124, -0.06665, 0.05469, 0.06662, -0.03564, -0.06665, 0.02020, 0.06662, -0.00656, -0.06665, -0.00656, 0.06662, 0.02020, -0.06665, -0.03564, 0.06662, 0.05469, -0.06665, -0.08124, 0.06662, 0.12469, -0.06665, -0.21976, 0.06662, 0.67682};
-    this->convolucion(numMuestras, x, h, salida);
-  }
-  delete[] x;
-  return salida;
-}
-
-double ArchivoWAV::transformadaFourier(complex<double>* X, bool inversa, const ArchivoWAV& salida) const
-{
-  double acumR = -100, acumI = -100;
-  const double pi = std::acos(complex<double>(-1.0, 0)).real()*(inversa?1:-1);
-  for(unsigned int k = 0; k < salida.numeroMuestras; k += salida.numeroCanales)
-  {
-    for(unsigned int n = 0; n < numeroMuestras; n += numeroCanales)
-    {
-      pair<short, short> muestra = extraerMuestra(44 + n*(bytesPorMuestra));
-      complex<double> x_n = map(muestra, -32768, 32767, -1, 1);
-      complex<double> exponente = 2*pi*(k/2)*n/(numeroMuestras);
-      complex<double> e = complex<double>(std::cos(exponente).real(), std::sin(exponente).real());
-      X[k] += x_n*e;
-    }
-    if(X[k].real() > acumR)
-      acumR = X[k].real();
-    if(X[k].imag() > acumI)
-      acumI = X[k].imag();
-  }
-  return acumR > acumI? acumR: acumI;
-}
-
-ArchivoWAV ArchivoWAV::transformadaFourier(const string& name, const unsigned int opcion) const
-{
-  string str(name);
-  if(name == "")
-  {
-    str = string(fileName);
-    str.erase(str.end() - 4, str.end());
-    str += " transformado con opcion " + std::to_string(opcion) + ".wav";
-  }
-  ArchivoWAV salida(str, numeroCanales == 1? fileSize + tamanoAudio: fileSize, 2, frecuenciaMuestreo, bitsPorMuestra, numeroCanales == 1? 2*(tamanoAudio):tamanoAudio);
-  complex<double>* X = new complex<double>[salida.numeroMuestras];
-  double acum = transformadaFourier(X, false, salida);
-  switch(opcion)
-  {
-  case 0:
-    for(unsigned int k = 0; k < salida.numeroMuestras; k += salida.numeroCanales)
-    {
-      pair<short, short> resultado = map(X[k], -acum, acum, -32768, 32767);
-      salida.insertarMuestra(resultado, 44 + k*bytesPorMuestra);
-    }
-    break;
-  case 1:
-    for(unsigned int k = 0, n = 0; k < salida.numeroMuestras; k += salida.numeroCanales, n += numeroCanales)
-    {
-      pair<short, short> muestra = extraerMuestra(44 + n*bytesPorMuestra);
-      double magnitud = std::abs(X[k]);
-      double raizDos = std::sqrt(complex<double>(2, 0)).real();
-      pair<short, short> resultado(muestra.first, map(magnitud, -raizDos*acum, raizDos*acum, -32768, 32767));
-      salida.insertarMuestra(resultado, 44 + k*bytesPorMuestra);
-    }
-    break;
-  case 2:
-    for(unsigned int k = 0; k < salida.numeroMuestras; k += salida.numeroCanales)
-    {
-      double magnitud = std::abs(X[k]);
-      double fase = std::arg(X[k]);
-      double raizDos = std::sqrt(complex<double>(2, 0)).real();
-      double pi = std::acos(complex<double>(-1.0, 0)).real();
-      pair<short, short> resultado(map(magnitud, -raizDos*acum, raizDos*acum, -32768, 32767), map(fase, -pi/4, pi/4, -32768, 32767));
-      salida.insertarMuestra(resultado, 44 + k*bytesPorMuestra);
-    }
-    break;
-  }
-  delete[] X;
-  return salida;
-}
-
-ArchivoWAV ArchivoWAV::transformadaInversa(const string& name) const
-{
-  string str(name);
-  if(name == "")
-  {
-    str = string(fileName);
-    str.erase(str.end() - 4, str.end());
-    str += " transformada inversa.wav";
-  }
-  ArchivoWAV salida(str, numeroCanales == 1? fileSize + tamanoAudio: fileSize, 2, frecuenciaMuestreo, bitsPorMuestra, numeroCanales == 1? 2*(tamanoAudio):tamanoAudio);
-  complex<double>* x = new complex<double>[salida.numeroMuestras];
-  double acum = transformadaFourier(x, true, salida);
-  for(unsigned int k = 0; k < salida.numeroMuestras; k += salida.numeroCanales)
-  {
-    pair<short, short> resultado = map(x[k], -acum, acum, -32768, 32767);
-    salida.insertarMuestra(resultado, 44 + k*bytesPorMuestra);
-  }
-  delete[] x;
-  return salida;
-}
-
-// double ArchivoWAV::transformadaRapida(complex<double>* X, bool inversa, const ArchivoWAV& salida) const
-// {
-//   //Si el arreglo tiene sólo dos elementos realizar el cálculo y regresar el número calculado
-//   //Partir el arreglo en dos
-//   //Procesar la transformadaRapida de los dos arreglos
-//   //Sumar los resultados obtenidos del procesamiento de los arreglos
-// }
-
-// ArchivoWAV ArchivoWAV::transformadaRapida(const string& name, const unsigned int opcion) const
-// {
-// }
-
-// ArchivoWAV ArchivoWAV::transformadaRapidaInversa(const string& name) const
-// {
-// }
 
 double ArchivoWAV::map(double x, double inMin, double inMax, double outMin, double outMax) const
 {
@@ -307,64 +122,119 @@ pair<short, short> ArchivoWAV::map(const complex<double>& muestra, double inMin,
   return pair<short, short>(map(muestra.real(), inMin, inMax, outMin, outMax), map(muestra.imag(), inMin, inMax, outMin, outMax));
 }
 
+valarray<complex<double>> ArchivoWAV::map(const valarray<short>& data, double inMin, double inMax, double outMin, double outMax) const
+{
+  valarray<complex<double>> resultado(numeroCanales == 2? data.size()/2 : data.size());
+  for(unsigned int i = 0, j = 0; i < data.size() && j < resultado.size(); i += numeroCanales, j++)
+  {
+    double real = 0, imag = 0;
+    real = map(data[i], inMin, inMax, outMin, outMax);
+    if(numeroCanales == 2)
+      imag = map(data[i+1], inMin, inMax, outMin, outMax);
+    resultado[j] = complex<double>(real, imag);
+  }
+  return resultado;
+}
+
+valarray<short> ArchivoWAV::map(const valarray<complex<double>>& data) const
+{
+  valarray<short> resultado(numeroCanales == 2? data.size()*2 : data.size());
+  for(unsigned int i = 0, j = 0; i < data.size() && j < resultado.size(); i++, j += numeroCanales)
+  {
+    pair<short, short> res = map(data[i], -1, 1, -32768, 32767);
+    resultado[j] = res.first;
+    if(numeroCanales == 2)
+      resultado[j+1] = res.second;
+  }
+  return resultado;
+}
+
+short* ArchivoWAV::map(valarray<short> data)
+{
+  short* resultado = new short[data.size()];
+  for(unsigned int i = 0; i < data.size(); i++)
+    resultado[i] = data[i];
+  return resultado;
+}
+
 unsigned char ArchivoWAV::extraerUByte(unsigned int i) const
 {
-  return fileData[i];
+  if(i < 44)
+    return fileMetadata[i];
+  return 0;
 }
 
 char ArchivoWAV::extraerSByte(unsigned int i) const
 {
-  return (char)fileData[i];
+  if(i < 44)
+    return (char)fileMetadata[i];
+  return 0;
 }
 
 unsigned short ArchivoWAV::extraerUShort(unsigned int i) const
 {
-  return *((unsigned short*)(fileData + i));
+  if(i < 44)
+    return *((unsigned short*)(fileMetadata + i));
+  return 0;
 }
 
 short ArchivoWAV::extraerSShort(unsigned int i) const
 {
-  return *((short*)(fileData + i));
+  if(i < 44)
+    return *((short*)(fileMetadata + i));
+  return 0;
 }
 
 unsigned int ArchivoWAV::extraerUInt(unsigned int i) const
 {
-  return *((unsigned int*)(fileData + i));
+  if(i < 44)
+    return *((unsigned int*)(fileMetadata + i));
+  return 0;
 }
 
 int ArchivoWAV::extraerSInt(unsigned int i) const
 {
-  return *((int*)(fileData + i));
+  if(i < 44)
+    return *((int*)(fileMetadata + i));
+  return 0;
 }
 
 unsigned long ArchivoWAV::extraerULong(unsigned int i) const
 {
-  return *((unsigned long*)(fileData + i));
+  if(i < 44)
+    return *((unsigned long*)(fileMetadata + i));
+  return 0;
 }
 
 long ArchivoWAV::extraerSLong(unsigned int i) const
 {
-  return *((long*)(fileData + i));
+  if(i < 44)
+    return *((long*)(fileMetadata + i));
+  return 0;
 }
 
 void ArchivoWAV::escribirByte(unsigned char byte, unsigned int posicion)
 {
-  fileData[posicion] = byte;
+  if(posicion <= 43)
+    fileMetadata[posicion] = byte;
 }
 
 void ArchivoWAV::escribirShort(unsigned short entero, unsigned int posicion)
 {
-  memcpy(fileData+posicion, &entero, sizeof(unsigned short));
+  if(posicion <= 42)
+    memcpy(fileMetadata+posicion, &entero, sizeof(unsigned short));
 }
 
 void ArchivoWAV::escribirInt(unsigned int entero, unsigned int posicion)
 {
-  memcpy(fileData+posicion, &entero, sizeof(unsigned int));
+  if(posicion <= 40)
+    memcpy(fileMetadata+posicion, &entero, sizeof(unsigned int));
 }
 
 void ArchivoWAV::escribirLong(unsigned long entero, unsigned int posicion)
 {
-  memcpy(fileData+posicion, &entero, sizeof(unsigned long));
+  if(posicion <= 36)
+    memcpy(fileMetadata+posicion, &entero, sizeof(unsigned long));
 }
 
 std::ostream& operator<<(std::ostream& out, const ArchivoWAV& arch)
@@ -376,4 +246,197 @@ std::ostream& operator<<(std::ostream& out, const ArchivoWAV& arch)
   out << "Número de muestras: " << arch.numeroMuestras << std::endl;
   out << "Frecuencia de muestreo: " << arch.frecuenciaMuestreo << std::endl;
   return out;
+}
+
+ArchivoWAV ArchivoWAV::operator/(const double& valor) const
+{
+  string str(fileName);
+  str.erase(str.end() - 4, str.end());
+  str += " dividido entre ";
+  str += std::to_string((int)valor);
+  str += ".wav";
+  ArchivoWAV salida(*this, str);
+  salida.fileData = fileData/complex<double>(valor, 0);
+  return salida;
+}
+
+ArchivoWAV ArchivoWAV::operator*(const ArchivoWAV& arch) const
+{
+  string str(fileName);
+  str.erase(str.end() - 4, str.end());
+  string str2(arch.fileName);
+  str2.erase(str2.end() - 4, str2.end());
+  str += " multiplicado con " + str2 + ".wav";
+  ArchivoWAV salida(*this, arch, str);
+  salida.fileData = fileData*arch.fileData;
+  return salida;
+}
+
+void ArchivoWAV::convolucion(unsigned int numMuestras, const valarray<complex<double>> h, ArchivoWAV& salida) const
+{
+  valarray<complex<double>> x(numMuestras);
+  for(unsigned int i = 0; i < fileData.size(); i++)
+  {
+    x = x.shift(-1);
+    x[0] = extraerMuestra(i);
+    salida.insertarMuestra((x*h).sum(), i);
+  }
+  double acum = max(salida.fileData);
+  salida.fileData /= complex<double>(acum, 0);
+}
+
+ArchivoWAV ArchivoWAV::simularCircuitoRC(const string& name, unsigned int numMuestras, unsigned int frecCorte, bool ideal) const
+{
+  string str(name);
+  if(name == "")
+  {
+    str = string(fileName);
+    str.erase(str.end() - 4, str.end());
+    str += " filtrado a " + std::to_string(frecCorte) + ".wav";
+  }
+  ArchivoWAV salida(*this, str);
+  if(frecCorte == 3000 && numMuestras == 10 && !ideal)
+  {
+    const complex<double> array[] = {{1.000000000, 0}, {0.652184637, 0}, {0.425344800, 0}, {0.277403344, 0}, {0.180918199, 0},
+				     {0.117992070, 0}, {0.076952615, 0}, {0.050187313, 0}, {0.032731395, 0}, {0.021346913, 0}};
+    const valarray<complex<double>> h(array, numMuestras);
+    this->convolucion(numMuestras, h, salida);
+  }
+  else if(frecCorte == 500 && numMuestras == 32 && ideal)
+  {
+    std::cout << "H" << std::endl;
+    const complex<double> array[] = {{0.999970, 0}, {0.676820, 0}, {0.066620, 0}, {-0.21976, 0},
+				     {-0.06665, 0}, {0.124690, 0}, {0.066620, 0}, {-0.08124, 0},
+				     {-0.06665, 0}, {0.054690, 0}, {0.066620, 0}, {-0.03564, 0},
+				     {-0.06665, 0}, {-0.02020, 0}, {-0.06662, 0}, {-0.00656, 0},
+				     {-0.06665, 0}, {0.006560, 0}, {0.066620, 0}, {0.020200, 0},
+				     {-0.06665, 0}, {-0.03564, 0}, {-0.06662, 0}, {0.054690, 0},
+				     {-0.06665, 0}, {-0.08124, 0}, {0.066620, 0}, {0.124690, 0},
+				     {0.066650, 0}, {-0.21976, 0}, {0.066620, 0}, {0.676820, 0}};
+    const valarray<complex<double>> h(array, numMuestras);
+    this->convolucion(numMuestras, h, salida);
+  }
+  return salida;
+}
+
+
+void ArchivoWAV::transformadaFourier(valarray<complex<double>>& X, bool inversa, const ArchivoWAV& salida) const
+{
+  const double pi = std::acos(complex<double>(-1.0, 0)).real()*(inversa?1:-1);
+  for(unsigned int k = 0; k < salida.fileData.size(); k++)
+  {
+    for(unsigned int n = 0; n < fileData.size(); n++)
+    {
+      complex<double> x_n = extraerMuestra(n);
+      complex<double> exponente = std::polar(1.0, 2*pi*(k)*n/(fileData.size()));
+      X[k] += x_n*exponente;
+    }
+  }
+}
+
+void transformadaRapida(valarray<complex<double>>& X, const double pi)
+{
+  const unsigned int numMuestras = X.size();
+  if(numMuestras <= 1)
+    return;
+  valarray<complex<double>> pares = X[std::slice(0, numMuestras/2, 2)];
+  valarray<complex<double>> impares = X[std::slice(1, numMuestras/2, 2)];
+  // std::thread hiloPar(transformadaRapida, std::ref(pares), pi);
+  // hiloPar.detach();
+  // std::thread hiloImpar(transformadaRapida, std::ref(impares), pi);
+  // hiloImpar.detach();
+  transformadaRapida(pares, pi);
+  transformadaRapida(impares, pi);
+  for(unsigned int k = 0; k < numMuestras/2; ++k)
+  {
+    complex<double> t = std::polar(1.0, 2 * pi * k / numMuestras) * impares[k];
+    X[k] = pares[k] + t;
+    X[k+numMuestras/2] = pares[k] - t;
+  }
+}
+
+ArchivoWAV ArchivoWAV::transformadaFourier(const string& name, const bool rapida, const unsigned int opcion) const
+{
+  string str(name);
+  if(name == "")
+  {
+    str = string(fileName);
+    str.erase(str.end() - 4, str.end());
+    str += " transformado ";
+    str += (rapida?"rapido":"lento");
+    str += " con opcion " + std::to_string(opcion) + ".wav";
+  }
+  ArchivoWAV salida(str, numeroCanales == 1? fileSize + tamanoAudio: fileSize, 2, frecuenciaMuestreo, bitsPorMuestra, numeroCanales == 1? 2*(tamanoAudio):tamanoAudio);
+  valarray<complex<double>> X;
+  double acum;
+  if(rapida)
+  {
+    X = valarray<complex<double>>(fileData);
+    transformadaRapida(X, std::acos(complex<double>(-1.0, 0)).real()*-1);
+  }
+  else
+  {
+    X = valarray<complex<double>>(fileData.size());
+    transformadaFourier(X, false, salida);
+  }
+  acum = max(X);
+  switch(opcion)
+  {
+  case 0:
+    salida.fileData = X;
+    salida.fileData /= complex<double>(acum, 0);
+    break;
+  case 1:
+    for(unsigned int k = 0, n = 0; k < salida.fileData.size(); k++, n++)
+    {
+      complex<double> muestra = n < fileData.size()? extraerMuestra(n) : complex<double>(0, 0);
+      double magnitud = std::abs(X[k]);
+      double raizDos = std::sqrt(complex<double>(2, 0)).real();
+      complex<double> resultado(muestra.real(), map(magnitud, -raizDos*acum, raizDos*acum, -1, 1));
+      salida.insertarMuestra(resultado, k);
+    }
+    break;
+  case 2:
+    for(unsigned int k = 0; k < fileData.size(); k++)
+    {
+      double magnitud = std::abs(X[k]);
+      double fase = std::arg(X[k]);
+      double raizDos = std::sqrt(complex<double>(2, 0)).real();
+      double pi = std::acos(complex<double>(-1.0, 0)).real();
+      complex<double> resultado( map(magnitud, -raizDos*acum, raizDos*acum, -1, 1), map(fase, -pi/4, pi/4, -1, 1));
+      salida.insertarMuestra(resultado, k);
+    }
+    break;
+  }
+  return salida;
+}
+
+ArchivoWAV ArchivoWAV::transformadaInversa(const string& name, const bool rapida) const
+{
+  string str(name);
+  if(name == "")
+  {
+    str = string(fileName);
+    str.erase(str.end() - 4, str.end());
+    str += " transformada inversa ";
+    str += (rapida?"rapida":"lenta");
+    str += ".wav";
+  }
+  ArchivoWAV salida(str, numeroCanales == 1? fileSize + tamanoAudio: fileSize, 2, frecuenciaMuestreo, bitsPorMuestra, numeroCanales == 1? 2*(tamanoAudio):tamanoAudio);
+  valarray<complex<double>> x;
+  double acum;
+  if(rapida)
+  {
+    x = valarray<complex<double>>(fileData);
+    transformadaRapida(x, std::acos(complex<double>(-1.0, 0)).real());
+  }
+  else
+  {
+    x = valarray<complex<double>>(fileData.size());
+    transformadaFourier(x, true, salida);
+  }
+  acum = max(x);
+  salida.fileData = x;
+  salida.fileData /= complex<double>(acum, 0);
+  return salida;
 }
