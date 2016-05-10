@@ -1,5 +1,5 @@
 Main: Main.cpp ArchivoWAVR.o ArchivoWAVW.o ArchivoWAV.o
-	g++ Main.cpp ArchivoWAVR.o ArchivoWAVW.o ArchivoWAV.o -Wall -std=c++11 -o Main.out
+	g++ Main.cpp ArchivoWAVR.o ArchivoWAVW.o ArchivoWAV.o -Wall -std=c++11 -lpthread -o Main.out
 	cp Main.out ..
 
 ArchivoWAVR.o: ArchivoWAVR.cpp ArchivoWAVR.hpp ArchivoWAV.o
