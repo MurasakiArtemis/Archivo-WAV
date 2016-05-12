@@ -244,6 +244,7 @@ std::ostream& operator<<(std::ostream& out, const ArchivoWAV& arch)
   out << "Bytes por muestra: " << arch.bytesPorMuestra << std::endl;
   out << "Tamaño del audio: " << arch.tamanoAudio << std::endl;
   out << "Número de muestras: " << arch.numeroMuestras << std::endl;
+  out << "Número de muestras complejas: " << arch.fileData.size() << std::endl;
   out << "Frecuencia de muestreo: " << arch.frecuenciaMuestreo << std::endl;
   return out;
 }
