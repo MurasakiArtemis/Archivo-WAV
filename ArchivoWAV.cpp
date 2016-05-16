@@ -247,16 +247,8 @@ std::ostream& operator<<(std::ostream& out, const ArchivoWAV& arch)
   out << "Número de muestras: " << arch.numeroMuestras << std::endl;
   out << "Número de muestras complejas: " << arch.fileData.size() << std::endl;
   out << "Frecuencia de muestreo: " << arch.frecuenciaMuestreo << std::endl;
-  out << "Resolución en frecuencia: " << double(arch.frecuenciaMuestreo)/double(arch.fileData.size()) << std::endl;
   vector<double> cos, sin;
   arch.obtenerFrecuencias(cos, sin);
-  for(std::vector<double>::const_iterator i = cos.begin(), j = sin.begin(); i < cos.end() || j < sin.end(); i++, j++)
-  {
-    if(i < cos.end())
-      std::cout << "Cos: " << *i << std::endl;
-    if(j < sin.end())
-      std::cout << "Sin: " << *j << std::endl;
-  }
   return out;
 }
 
@@ -449,16 +441,16 @@ ArchivoWAV ArchivoWAV::transformadaInversa(const string& name, const bool rapida
   return salida;
 }
 
-void ArchivoWAV::obtenerFrecuencias(vector<double>& cos, vector<double>& sin) const
+void ArchivoWAV::obtenerFrecuencias(vector<double>& cos, vector<double>& sin, const int partir) const
 {
   double resolucionFrecuencia = double(frecuenciaMuestreo)/double(fileData.size());
   double acum;
   const valarray<complex<double>>& X = fileData;
-  int ancho = X.size()/2;
+  int ancho = X.size()/partir;
   for(unsigned int i = 0; i < X.size(); i += ancho)
   {
+    std::cout << "Resolución en frecuencia: " << double(frecuenciaMuestreo)/double(ancho) << std::endl;
     valarray<complex<double>> f = X[std::slice(i, ancho, 1)];
-    std::cout << f.size() << std::endl;
     transformadaRapida(f, std::acos(complex<double>(-1.0, 0)).real()*-1);
     acum = max(f);
     f /= complex<double>(acum, 0);
@@ -469,5 +461,12 @@ void ArchivoWAV::obtenerFrecuencias(vector<double>& cos, vector<double>& sin) co
       if(std::abs(f[i].imag()) > 0.5)
 	sin.push_back(i*resolucionFrecuencia);
     }
+  }
+  for(std::vector<double>::const_iterator i = cos.begin(), j = sin.begin(); i < cos.end() || j < sin.end(); i++, j++)
+  {
+    if(i < cos.end())
+      std::cout << "Cos: " << *i << std::endl;
+    if(j < sin.end())
+      std::cout << "Sin: " << *j << std::endl;
   }
 }
