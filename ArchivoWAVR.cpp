@@ -17,7 +17,7 @@ ArchivoWAVR::ArchivoWAVR(const string& nombreArchivo):
   bytesPorMuestra = bitsPorMuestra/8;
   tamanoAudio = extraerUInt(40);
   numeroMuestras = tamanoAudio/bytesPorMuestra;
-  frecuenciaMuestreo = extraerUShort(24);
+  frecuenciaMuestreo = extraerUInt(24);
   valarray<short> temporaryData = valarray<short>((short*)(fileMetadata+44), numeroMuestras);
   fileData = map(temporaryData, -32768, 32767, -1, 1);
 }
