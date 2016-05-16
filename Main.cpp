@@ -9,7 +9,7 @@ void imprimeError(int opcion, char **argv)
   switch(opcion)
   {
   case 1:
-    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>]" << std::endl;
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada>" << std::endl;
     break;
   case 2:
     std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> <divisor>" << std::endl;
@@ -31,6 +31,9 @@ void imprimeError(int opcion, char **argv)
     break;
   case 8:
     std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> <filtro> [<archivo de salida>]" << std::endl;
+    break;
+  case 9:
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> <número de ventanas>" << std::endl;
     break;
   default:
     std::cout << "Opción inválida" << std::endl;
@@ -202,6 +205,19 @@ int main(int argc, char *argv[])
       if(argc == 5)
 	str = argv[4];
       ArchivoWAVW c((a.transformadaFourier("")*b.transformadaFourier("")).transformadaInversa(str));
+    }
+    break;
+  case 9:
+    {
+      if(argc != 4)
+      {
+	imprimeError(opcion, argv);
+	return -1;
+      }
+      ArchivoWAVR a(argv[2]);
+      int numVentanas = std::stoi(argv[3]);
+      vector<double> cos, sin;
+      a.obtenerFrecuencias(cos, sin, numVentanas);
     }
     break;
   default:
