@@ -7,11 +7,13 @@
 #include <utility>
 #include <iostream>
 #include <valarray>
+#include <vector>
 
 using std::valarray;
 using std::string;
 using std::pair;
 using std::complex;
+using std::vector;
 
 double max(valarray<complex<double>> X);
 
@@ -33,6 +35,7 @@ public:
   ArchivoWAV simularCircuitoRC(const string&, unsigned int=10, unsigned int=3000, bool ideal=false) const;
   ArchivoWAV transformadaFourier(const string& name, const bool rapida=true, const unsigned int opcion=0) const;
   ArchivoWAV transformadaInversa(const string&, const bool rapida=true) const;
+  void obtenerFrecuencias(vector<double>& cos, vector<double>& sin) const;
   double map(double, double, double, double, double) const;
   complex<double> map(const pair<short, short>&, double, double, double, double) const;
   pair<short, short> map(const complex<double>&, double, double, double, double) const;
@@ -57,7 +60,7 @@ protected:
   unsigned short bytesPorMuestra;
   unsigned int tamanoAudio;
   unsigned int numeroMuestras;
-  unsigned short frecuenciaMuestreo;
+  unsigned int frecuenciaMuestreo;
   string fileName;		/*!< Nombre del archivo */
   unsigned int fileSize;	/*!< Tamaño del archivo */
   unsigned char* fileMetadata;	/*!< Bloque de meta información del archivo */

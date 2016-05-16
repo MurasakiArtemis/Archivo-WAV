@@ -1,6 +1,6 @@
 #include "ArchivoWAV.hpp"
 #include <cstring>
-#include <thread>
+#include <vector>
 
 double max(valarray<complex<double>> X)
 {
@@ -88,7 +88,7 @@ ArchivoWAV::ArchivoWAV(const ArchivoWAV& arch):
   bytesPorMuestra(arch.bytesPorMuestra), tamanoAudio(arch.tamanoAudio), numeroMuestras(arch.numeroMuestras),
   frecuenciaMuestreo(arch.frecuenciaMuestreo), fileName(arch.fileName), fileSize(arch.fileSize),
   fileMetadata(new unsigned char[fileSize]), fileData(arch.fileData)
-{ 
+{
   memcpy(fileMetadata, arch.fileMetadata, fileSize);
 }
 
@@ -239,6 +239,7 @@ void ArchivoWAV::escribirLong(unsigned long entero, unsigned int posicion)
 
 std::ostream& operator<<(std::ostream& out, const ArchivoWAV& arch)
 {
+  out << "Nombre: " << arch.fileName << std::endl;
   out << "Número de canales: " << arch.numeroCanales << std::endl;
   out << "Bits por muestra: " << arch.bitsPorMuestra << std::endl;
   out << "Bytes por muestra: " << arch.bytesPorMuestra << std::endl;
@@ -246,6 +247,16 @@ std::ostream& operator<<(std::ostream& out, const ArchivoWAV& arch)
   out << "Número de muestras: " << arch.numeroMuestras << std::endl;
   out << "Número de muestras complejas: " << arch.fileData.size() << std::endl;
   out << "Frecuencia de muestreo: " << arch.frecuenciaMuestreo << std::endl;
+  out << "Resolución en frecuencia: " << double(arch.frecuenciaMuestreo)/double(arch.fileData.size()) << std::endl;
+  vector<double> cos, sin;
+  arch.obtenerFrecuencias(cos, sin);
+  for(std::vector<double>::const_iterator i = cos.begin(), j = sin.begin(); i < cos.end() || j < sin.end(); i++, j++)
+  {
+    if(i < cos.end())
+      std::cout << "Cos: " << *i << std::endl;
+    if(j < sin.end())
+      std::cout << "Sin: " << *j << std::endl;
+  }
   return out;
 }
 
@@ -342,10 +353,6 @@ void transformadaRapida(valarray<complex<double>>& X, const double pi)
     return;
   valarray<complex<double>> pares = X[std::slice(0, numMuestras/2, 2)];
   valarray<complex<double>> impares = X[std::slice(1, numMuestras/2, 2)];
-  // std::thread hiloPar(transformadaRapida, std::ref(pares), pi);
-  // hiloPar.detach();
-  // std::thread hiloImpar(transformadaRapida, std::ref(impares), pi);
-  // hiloImpar.detach();
   transformadaRapida(pares, pi);
   transformadaRapida(impares, pi);
   for(unsigned int k = 0; k < numMuestras/2; ++k)
@@ -440,4 +447,27 @@ ArchivoWAV ArchivoWAV::transformadaInversa(const string& name, const bool rapida
   salida.fileData = x;
   salida.fileData /= complex<double>(acum, 0);
   return salida;
+}
+
+void ArchivoWAV::obtenerFrecuencias(vector<double>& cos, vector<double>& sin) const
+{
+  double resolucionFrecuencia = double(frecuenciaMuestreo)/double(fileData.size());
+  double acum;
+  const valarray<complex<double>>& X = fileData;
+  int ancho = X.size()/2;
+  for(unsigned int i = 0; i < X.size(); i += ancho)
+  {
+    valarray<complex<double>> f = X[std::slice(i, ancho, 1)];
+    std::cout << f.size() << std::endl;
+    transformadaRapida(f, std::acos(complex<double>(-1.0, 0)).real()*-1);
+    acum = max(f);
+    f /= complex<double>(acum, 0);
+    for(unsigned int i = 0; i < f.size()/2; i++)
+    {
+      if(std::abs(f[i].real()) > 0.5)
+	cos.push_back(i*resolucionFrecuencia);
+      if(std::abs(f[i].imag()) > 0.5)
+	sin.push_back(i*resolucionFrecuencia);
+    }
+  }
 }
