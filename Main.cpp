@@ -3,6 +3,7 @@
 #include "ArchivoWAVR.hpp"
 #include <iostream>
 #include <string>
+#include <set>
 
 void imprimeError(int opcion, char **argv)
 {
@@ -46,7 +47,7 @@ int main(int argc, char *argv[])
   if(argc < 2)
   {
     std::cout << "El modo de uso es: " << argv[0] << " <opción> [<argumentos de opción>]^+" << std::endl;
-    std::cout << "Opciones:\n0: Describir Archivo\n1: Copia\n2: División\n3: Simular circuito\n4: Producto\n5: Transformada\n6: Transformada Inversa\n8: Convolución" << std::endl;
+    std::cout << "Opciones:\n0: Describir Archivo\n1: Copia\n2: División\n3: Simular circuito\n4: Producto\n5: Transformada\n6: Transformada Inversa\n8: Convolución\n9: Obtención de frecuencias" << std::endl;
     return -1;
   }
   int opcion = std::stoi(argv[1]);
@@ -216,8 +217,65 @@ int main(int argc, char *argv[])
       }
       ArchivoWAVR a(argv[2]);
       int numVentanas = std::stoi(argv[3]);
-      vector<double> cos, sin;
+      std::set<double> cos, sin;
       a.obtenerFrecuencias(cos, sin, numVentanas);
+      for(std::set<double>::const_iterator i = cos.cbegin(), j = sin.cbegin(); i != cos.cend() || j != sin.cend();)
+      {
+	if(i != cos.cend())
+	{
+	  std::cout << "Cos: " << *i << std::endl;
+	  i++;
+	}
+	if(j != sin.cend())
+	{
+	  std::cout << "Sin: " << *j << std::endl;
+	  j++;
+	}
+      }
+      if(sin.count(697) != 0)
+      {
+	if(sin.count(1209) != 0)
+	  std::cout << "Tono 1" << std::endl;
+	if(sin.count(1336) != 0)
+	  std::cout << "Tono 2" << std::endl;
+	if(sin.count(1477) != 0)
+	  std::cout << "Tono 3" << std::endl;
+	if(sin.count(1633) != 0)
+	  std::cout << "Tono A" << std::endl;
+      }
+      if(sin.count(770) != 0)
+      {
+	if(sin.count(1209) != 0)
+	  std::cout << "Tono 4" << std::endl;
+	if(sin.count(1336) != 0)
+	  std::cout << "Tono 5" << std::endl;
+	if(sin.count(1477) != 0)
+	  std::cout << "Tono 6" << std::endl;
+	if(sin.count(1633) != 0)
+	  std::cout << "Tono B" << std::endl;
+      }
+      if(sin.count(852) != 0)
+      {
+	if(sin.count(1209) != 0)
+	  std::cout << "Tono 7" << std::endl;
+	if(sin.count(1336) != 0)
+	  std::cout << "Tono 8" << std::endl;
+	if(sin.count(1477) != 0)
+	  std::cout << "Tono 9" << std::endl;
+	if(sin.count(1633) != 0)
+	  std::cout << "Tono C" << std::endl;
+      }
+      if(sin.count(941) != 0)
+      {
+	if(sin.count(1209) != 0)
+	  std::cout << "Tono *" << std::endl;
+	if(sin.count(1336) != 0)
+	  std::cout << "Tono 0" << std::endl;
+	if(sin.count(1477) != 0)
+	  std::cout << "Tono #" << std::endl;
+	if(sin.count(1633) != 0)
+	  std::cout << "Tono D" << std::endl;
+      }
     }
     break;
   default:
