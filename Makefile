@@ -1,19 +1,13 @@
-Main: Main.cpp ArchivoWAVM.o
-	g++ Main.cpp ArchivoWAVM.o ArchivoWAV.o Archivo.o ArchivoW.o ArchivoR.o -Wall -std=c++11 -o Main.out
+Main: Main.cpp ArchivoWAVR.o ArchivoWAVW.o ArchivoWAV.o
+	g++ Main.cpp ArchivoWAVR.o ArchivoWAVW.o ArchivoWAV.o -Wall -std=c++11 -lpthread -o Main.out
+	cp Main.out ..
 
-ArchivoWAVM.o: ArchivoWAVM.cpp ArchivoWAVM.hpp ArchivoWAV.o ArchivoR.o ArchivoW.o
-	g++ ArchivoWAVM.cpp -c -Wall -std=c++11
-
+ArchivoWAVR.o: ArchivoWAVR.cpp ArchivoWAVR.hpp ArchivoWAV.o
+	g++ ArchivoWAVR.cpp -c -Wall -std=c++11
+ArchivoWAVW.o: ArchivoWAVW.cpp ArchivoWAVW.hpp ArchivoWAV.o
+	g++ ArchivoWAVW.cpp -c -Wall -std=c++11
 ArchivoWAV.o: ArchivoWAV.cpp ArchivoWAV.hpp
 	g++ ArchivoWAV.cpp -c -Wall -std=c++11
-
-ArchivoR.o: ArchivoR.cpp ArchivoR.hpp Archivo.o
-	g++ ArchivoR.cpp -c -Wall -std=c++11
-ArchivoW.o: ArchivoW.cpp ArchivoW.hpp Archivo.o
-	g++ ArchivoW.cpp -c -Wall -std=c++11
-Archivo.o: Archivo.cpp Archivo.hpp
-	g++ Archivo.cpp -c -Wall -std=c++11
-
 
 clean:
 	rm *.out *.o

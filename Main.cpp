@@ -1,31 +1,40 @@
-#include "ArchivoWAVM.hpp"
+#include "ArchivoWAV.hpp"
+#include "ArchivoWAVW.hpp"
+#include "ArchivoWAVR.hpp"
 #include <iostream>
 #include <string>
+#include <set>
 
 void imprimeError(int opcion, char **argv)
 {
   switch(opcion)
   {
-  case 0:
-    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>]" << std::endl;
-    break;
   case 1:
-    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> <divisor>" << std::endl;
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada>" << std::endl;
     break;
   case 2:
-    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>] [<número de muestras>=10] [<frecuencia>=3000]" << std::endl;
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> <divisor>" << std::endl;
     break;
   case 3:
-    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <factor1> <factor2>" << std::endl;
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>] [<número de muestras>=10] [<frecuencia>=3000] [ideal]" << std::endl;
     break;
   case 4:
-    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<opción>=0] [<archivo de salida>]" << std::endl;
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <factor1> <factor2>" << std::endl;
     break;
   case 5:
-    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>]" << std::endl;
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [lenta] [<archivo de salida>] [<opción>=0]" << std::endl;
     break;
   case 6:
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [lenta] [<archivo de salida>]" << std::endl;
+    break;
+  case 7:
     std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> [<archivo de salida>]" << std::endl;
+    break;
+  case 8:
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> <filtro> [<archivo de salida>]" << std::endl;
+    break;
+  case 9:
+    std::cout << "El modo de uso es: " << argv[0] << " " << opcion << " <archivo de entrada> <número de ventanas>" << std::endl;
     break;
   default:
     std::cout << "Opción inválida" << std::endl;
@@ -38,7 +47,7 @@ int main(int argc, char *argv[])
   if(argc < 2)
   {
     std::cout << "El modo de uso es: " << argv[0] << " <opción> [<argumentos de opción>]^+" << std::endl;
-    std::cout << "Opciones:\n0: Copia\n1: División\n2: Simular circuito\n3: Producto\n4: Transformada\n5: Transformada Inversa" << std::endl;
+    std::cout << "Opciones:\n0: Describir Archivo\n1: Copia\n2: División\n3: Simular circuito\n4: Producto\n5: Transformada\n6: Transformada Inversa\n8: Convolución\n9: Obtención de frecuencias" << std::endl;
     return -1;
   }
   int opcion = std::stoi(argv[1]);
@@ -50,6 +59,20 @@ int main(int argc, char *argv[])
   switch(opcion)
   {
   case 0:
+    {
+      if(argc < 3)
+      {
+	imprimeError(opcion, argv);
+	return -1;
+      }
+      for(int i = 2; i < argc; i++)
+      {
+	ArchivoWAVR a(argv[i]);
+	std::cout << a << std::endl;
+      }
+    }
+    break;
+  case 1:
     {
       if(argc < 3 || argc > 4)
       {
@@ -69,7 +92,7 @@ int main(int argc, char *argv[])
       ArchivoWAVW b(a, str);
     }
     break;
-  case 1:
+  case 2:
     {
       if(argc != 4)
       {
@@ -78,12 +101,12 @@ int main(int argc, char *argv[])
       }
       ArchivoWAVR a(argv[2]);
       int divisor = std::stoi(argv[3]);
-      ArchivoWAVW b = a/divisor;
+      ArchivoWAVW b(a/divisor);
     }
     break;
-  case 2:
+  case 3:
     {
-      if(argc < 3 || argc > 6)
+      if(argc < 3 || argc > 7)
       {	
 	imprimeError(opcion, argv);
 	return -1;
@@ -103,10 +126,10 @@ int main(int argc, char *argv[])
         frecCorte = 3000;
       else
         frecCorte = std::stoi(argv[5]);
-      ArchivoWAVW b = a.simularCircuitoRC(str, numMuestras, frecCorte);
+      ArchivoWAVW b(a.simularCircuitoRC(str, numMuestras, frecCorte, argc == 7));
     }
     break;
-  case 3:
+  case 4:
     {
       if(argc != 4)
       {
@@ -115,10 +138,30 @@ int main(int argc, char *argv[])
       }
       ArchivoWAVR a(argv[2]);
       ArchivoWAVR b(argv[3]);
-      ArchivoWAVW c = a*b;
+      ArchivoWAVW c(a*b);
     }
     break;
-  case 4:
+  case 5:
+    {
+      if(argc < 3 || argc > 6)
+      {
+	imprimeError(opcion, argv);
+	return -1;
+      }
+      ArchivoWAVR a(argv[2]);
+      bool rapida = true;
+      if(argc > 3)
+	rapida = !(string(argv[3]) == "lenta");
+      int transfOpcion = 0;
+      std::string str;
+      if(argc > 4)
+	str = argv[4];
+      if(argc > 5)
+	transfOpcion = std::stoi(argv[5]);
+      ArchivoWAVW b(a.transformadaFourier(str, rapida, transfOpcion));
+    }
+    break;
+  case 6:
     {
       if(argc < 3 || argc > 5)
       {
@@ -126,49 +169,118 @@ int main(int argc, char *argv[])
 	return -1;
       }
       ArchivoWAVR a(argv[2]);
+      bool rapida = true;
+      if(argc > 3)
+	rapida = !(string(argv[3]) == "lenta");
+      std::string str;
+      if(argc > 4)
+	str = argv[4];
+      ArchivoWAVW b(a.transformadaInversa(str, rapida));
+    }
+    break;
+  case 7:
+    {
+      if(argc < 3 || argc > 4)
+      {
+	imprimeError(opcion, argv);
+	return -1;
+      }
+      ArchivoWAVR a(argv[2]);
+      std::string str;
+      if(argc == 4)
+	str = argv[3];
+      ArchivoWAV b(a.transformadaFourier(str));
+      ArchivoWAVW c(b.transformadaInversa(str));
+    }
+    break;
+  case 8:
+    {
+      if(argc < 4 || argc > 5)
+      {
+	imprimeError(opcion, argv);
+	return -1;
+      }
+      ArchivoWAVR a(argv[2]);
+      ArchivoWAVR b(argv[3]);
       std::string str;
       if(argc == 5)
 	str = argv[4];
-      int transfOpcion = 0;
-      if(argc > 3)
-	transfOpcion = std::stoi(argv[3]);
-      ArchivoWAVW b(a.transformadaFourier(str, transfOpcion));
+      ArchivoWAVW c((a.transformadaFourier("")*b.transformadaFourier("")).transformadaInversa(str));
     }
     break;
-  case 5:
+  case 9:
     {
-      if(argc < 3 || argc > 4)
+      if(argc != 4)
       {
 	imprimeError(opcion, argv);
 	return -1;
       }
       ArchivoWAVR a(argv[2]);
-      std::string str;
-      if(argc == 4)
-	str = argv[3];
-      ArchivoWAVW b(a.transformadaInversa(str));
-    }
-    break;
-  case 6:
-    {
-      if(argc < 3 || argc > 4)
+      int numVentanas = std::stoi(argv[3]);
+      std::set<double> cos, sin;
+      a.obtenerFrecuencias(cos, sin, numVentanas);
+      for(std::set<double>::const_iterator i = cos.cbegin(), j = sin.cbegin(); i != cos.cend() || j != sin.cend();)
       {
-	imprimeError(opcion, argv);
-	return -1;
+	if(i != cos.cend())
+	{
+	  std::cout << "Cos: " << *i << std::endl;
+	  i++;
+	}
+	if(j != sin.cend())
+	{
+	  std::cout << "Sin: " << *j << std::endl;
+	  j++;
+	}
       }
-      ArchivoWAVR a(argv[2]);
-      std::string str;
-      if(argc == 4)
-	str = argv[3];
-      ArchivoWAVN b(a.transformadaFourier(str));
-      ArchivoWAVW c(b.transformadaInversa(str));
+      if(sin.count(697) != 0)
+      {
+	if(sin.count(1209) != 0)
+	  std::cout << "Tono 1" << std::endl;
+	if(sin.count(1336) != 0)
+	  std::cout << "Tono 2" << std::endl;
+	if(sin.count(1477) != 0)
+	  std::cout << "Tono 3" << std::endl;
+	if(sin.count(1633) != 0)
+	  std::cout << "Tono A" << std::endl;
+      }
+      if(sin.count(770) != 0)
+      {
+	if(sin.count(1209) != 0)
+	  std::cout << "Tono 4" << std::endl;
+	if(sin.count(1336) != 0)
+	  std::cout << "Tono 5" << std::endl;
+	if(sin.count(1477) != 0)
+	  std::cout << "Tono 6" << std::endl;
+	if(sin.count(1633) != 0)
+	  std::cout << "Tono B" << std::endl;
+      }
+      if(sin.count(852) != 0)
+      {
+	if(sin.count(1209) != 0)
+	  std::cout << "Tono 7" << std::endl;
+	if(sin.count(1336) != 0)
+	  std::cout << "Tono 8" << std::endl;
+	if(sin.count(1477) != 0)
+	  std::cout << "Tono 9" << std::endl;
+	if(sin.count(1633) != 0)
+	  std::cout << "Tono C" << std::endl;
+      }
+      if(sin.count(941) != 0)
+      {
+	if(sin.count(1209) != 0)
+	  std::cout << "Tono *" << std::endl;
+	if(sin.count(1336) != 0)
+	  std::cout << "Tono 0" << std::endl;
+	if(sin.count(1477) != 0)
+	  std::cout << "Tono #" << std::endl;
+	if(sin.count(1633) != 0)
+	  std::cout << "Tono D" << std::endl;
+      }
     }
     break;
   default:
     imprimeError(opcion, argv);
     break;
   }
-  //  ArchivoWAVW e(a.simularCircuitoRC(""));
-  //  std::cout << e << std::endl;
   return 0;
 }
